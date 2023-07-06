@@ -1,0 +1,10 @@
+/SERVICE_ACCOUNT_CREDENTIALS.json
+/userslist.json
+/.aider.input.history
+/.aider.chat.history.md
+/.vscode
+/venv/pyvenv.cfg
+/venv/Scripts
+/discord.log
+/.env
+/__pycache__
