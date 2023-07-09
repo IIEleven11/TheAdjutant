@@ -15,8 +15,6 @@ from googleapiclient.discovery import build
 logger = logging.getLogger("discord")
 logger.setLevel(logging.INFO)
 logging.getLogger("discord.http").setLevel(logging.INFO)
-
-
 handler = logging.handlers.RotatingFileHandler(
     filename="discord.log",
     encoding="utf-8",
@@ -59,12 +57,12 @@ async def sync(ctx):
         await ctx.send("Sorry, only the bot owner can execute this command.")
 
 
-# Load user from JSON file
+# Load user from JSON 
 with open("userslist.json", "r") as file:
     users = json.load(file)
 
 
-#  save user notification to JSON file
+#  save user notification to JSON 
 def save_users_list():
     with open("userslist.json", "w") as file:
         json.dump(users, file, indent=4)
@@ -104,7 +102,6 @@ async def send_notification(user_id, event, tz):
             user = await bot.fetch_user(user_id)
             print(f"User object: {user}")
             logger.info(f"User object: {user}")
-
             # Extract event details
             event_title = event["summary"]
             event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"]).astimezone(tz)
@@ -112,10 +109,8 @@ async def send_notification(user_id, event, tz):
                 "%B %d %Y at %I:%M %p"
             )  # Format the start time
             event_details = event.get("description", "")
-
             # Convert HTML to markdown
             event_details = html_to_text(event_details)
-
             # Format the message
             message = f"Event Title: {event_title} at {event_start_str}\nEvent Details: {event_details}"
             await user.send(message)
@@ -139,8 +134,6 @@ async def on_ready():
 @bot.hybrid_command()
 async def opt_in(ctx):
     user_id = ctx.author.id
-
-    # Check if user is opted in
     if str(user_id) in users:
         await ctx.send("You are already opted in!")
     else:
@@ -153,8 +146,6 @@ async def opt_in(ctx):
 @bot.hybrid_command()
 async def opt_out(ctx):
     user_id = ctx.author.id
-
-    # Check if user is already opted out
     if str(user_id) not in users:
         await ctx.send("You are already opted out!")
     else:
@@ -162,7 +153,9 @@ async def opt_out(ctx):
         save_users_list()
         await ctx.send("You are now opted out from notifications!")
 
-# OMG Buttons!
+
+
+# OMG Buttons!!!!!!!!!!!!!!!!!!!
 class TimeZoneButtons(discord.ui.View):
     def __init__(self, *, timeout=None):
         super().__init__(timeout=timeout)
@@ -173,7 +166,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "America/Los_Angeles"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Pacific Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -184,7 +177,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "America/Denver"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Mountain Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -195,7 +188,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "America/Chicago"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Central Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -206,7 +199,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "America/New_York"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Eastern Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -217,7 +210,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Europe/London"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Greenwich Mean Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -228,7 +221,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Europe/Paris"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Central European Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -239,7 +232,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Asia/Dubai"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to United Arab Emirates Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -250,7 +243,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Asia/Tokyo"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Japan Standard Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -261,7 +254,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Asia/Kolkata"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to India Standard Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -272,7 +265,7 @@ class TimeZoneButtons(discord.ui.View):
         try:
             user_id = str(interaction.user.id)
             users[user_id]["time_zone"] = "Australia/Sydney"
-            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            save_users_list()  
             await interaction.response.edit_message(content="Your time zone is set to Australian Eastern Time.")
         except discord.errors.NotFound:
             print(f"The interaction has either expired or was not found.")
@@ -379,7 +372,7 @@ async def check_events():
                 await send_notification(user_id, event, tz)
 
 
-
+# Fancy embed
 @bot.hybrid_command()
 async def embed(ctx):
     embed = discord.Embed(
