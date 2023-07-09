@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import pytz
+from pytz import timezone
 from html_parser import html_to_text
 import logging.handlers
 import discord
@@ -90,7 +91,7 @@ def get_upcoming_events(max_results=10):
 
 
 # Sending of direct messages
-async def send_notification(user_id, event):
+async def send_notification(user_id, event, tz):
     print("send_notification function called")
     logger.info("send_notification function called")
     if isinstance(event, dict):
@@ -106,7 +107,7 @@ async def send_notification(user_id, event):
 
             # Extract event details
             event_title = event["summary"]
-            event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"])
+            event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"]).astimezone(tz)
             event_start_str = event_start.strftime(
                 "%B %d %Y at %I:%M %p"
             )  # Format the start time
@@ -125,6 +126,7 @@ async def send_notification(user_id, event):
             print("Invalid event data: missing or empty 'summary' key")
     except Exception as e:
         logger.exception(f"An error occurred while sending notification: {str(e)}")
+
 
 
 @bot.event
@@ -160,12 +162,124 @@ async def opt_out(ctx):
         save_users_list()
         await ctx.send("You are now opted out from notifications!")
 
+# OMG Buttons!
+class TimeZoneButtons(discord.ui.View):
+    def __init__(self, *, timeout=None):
+        super().__init__(timeout=timeout)
+        
+        
+    @discord.ui.button(label="America/Los_Angeles", style=discord.ButtonStyle.primary)
+    async def pacific_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "America/Los_Angeles"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Pacific Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+            
+            
+    @discord.ui.button(label="America/Denver", style=discord.ButtonStyle.primary)
+    async def mountain_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "America/Denver"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Mountain Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
 
-from discord.ext import commands
+        
+    @discord.ui.button(label="America/Chicago", style=discord.ButtonStyle.primary)
+    async def central_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "America/Chicago"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Central Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="America/New_York", style=discord.ButtonStyle.primary)
+    async def eastern_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "America/New_York"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Eastern Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="Europe/London", style=discord.ButtonStyle.primary)
+    async def greenwich_mean_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Europe/London"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Greenwich Mean Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="Europe/Paris", style=discord.ButtonStyle.primary)
+    async def central_european_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Europe/Paris"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Central European Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+            
+
+    @discord.ui.button(label="Asia/Dubai", style=discord.ButtonStyle.primary)
+    async def united_arab_emirates_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Asia/Dubai"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to United Arab Emirates Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="Asia/Tokyo", style=discord.ButtonStyle.primary)
+    async def japan_standard_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Asia/Tokyo"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Japan Standard Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="Asia/Kolkata", style=discord.ButtonStyle.primary)
+    async def india_standard_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Asia/Kolkata"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to India Standard Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
+
+
+    @discord.ui.button(label="Australia/Sydney", style=discord.ButtonStyle.primary)
+    async def australian_eastern_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            user_id = str(interaction.user.id)
+            users[user_id]["time_zone"] = "Australia/Sydney"
+            save_users_list()  # Save the updated users list to the 'userslist.json' file
+            await interaction.response.edit_message(content="Your time zone is set to Australian Eastern Time.")
+        except discord.errors.NotFound:
+            print(f"The interaction has either expired or was not found.")
 
 
 @bot.hybrid_command()
-async def set_notification(ctx, time_minutes: int):
+async def set_notification(ctx, time_minutes: int,):
     user_id = ctx.author.id
 
     # Check if user is opted in
@@ -184,43 +298,8 @@ async def set_notification(ctx, time_minutes: int):
     save_users_list()
     await ctx.send(f"Notification time set to {time_minutes} minutes.")
 
-    # List of time zones
-    time_zones = [
-        "America/Los_Angeles",  # Pacific Time
-        "America/Denver",  # Mountain Time
-        "America/Chicago",  # Central Time
-        "America/New_York",  # Eastern Time
-        "Europe/London",  # Greenwich Mean Time
-        "Europe/Paris",  # Central European Time
-        "Asia/Dubai",  # United Arab Emirates Time
-        "Asia/Kolkata",  # Indian Standard Time
-        "Asia/Tokyo",  # Japan Standard Time
-        "Australia/Sydney",  # Australian Eastern Time
-    ]
-
     # Ask for user's time zone
-    await ctx.send(
-        "Please reply with your time zone from the following options:\n"
-        + "\n".join(time_zones)
-    )
-
-    def check(m):
-        return (
-            m.author == ctx.author
-            and m.channel == ctx.channel
-            and m.content in time_zones
-        )
-
-    try:
-        msg = await bot.wait_for(
-            "message", check=check, timeout=60
-        )  # wait 60 seconds for user to reply
-    except asyncio.TimeoutError:
-        await ctx.followup.send("You didn't reply in time!")
-    else:
-        users[str(user_id)]["timezone"] = msg.content
-        save_users_list()
-        await ctx.followup.send(f"Time zone set to {msg.content}.")
+    await ctx.send("Please select your time zone:", view=TimeZoneButtons())
 
 
 # List upcoming events
@@ -246,18 +325,9 @@ async def list_events(ctx):
     await ctx.send(output)
 
 
-# 1hr loop to fetch events
-@tasks.loop(minutes=60)
-async def fetch_events():
-    global events
-    events = get_upcoming_events(max_results=50)  # Increase max_results if needed
-
-
 # 3 minutes loop to send notifications
 @tasks.loop(minutes=3)
 async def check_notifications():
-    current_time = datetime.datetime.now(pytz.timezone("America/Indiana/Tell_City"))
-
     # Load users list
     with open("userslist.json") as f:
         users = json.load(f)
@@ -265,28 +335,31 @@ async def check_notifications():
     # Iterate through users and their notification settings
     for user_id, settings in users.items():
         notification_time = settings["notification_time"]
+        user_time_zone = settings.get("time_zone", "America/Indiana/Tell_City")
+        tz = timezone(user_time_zone)
 
         # Skip users with no notification time set
         if notification_time is None:
             continue
 
-        # Calculate the cutoff time for sending notifications
+        current_time = datetime.datetime.now(tz)
         cutoff_time = current_time + datetime.timedelta(minutes=notification_time)
 
         # Iterate through the events and notify users if needed
         for event in events:
-            event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"])
+            event_start = tz.localize(datetime.datetime.fromisoformat(event["start"]["dateTime"]))
             if event_start > current_time and event_start <= cutoff_time:
-                await send_notification(user_id, event)
+                await send_notification(user_id, event, tz)
 
 
 # Background task - Check and send notifications
 @tasks.loop(minutes=60)  # Adjust the interval according to your needs
 async def check_events():
-    current_time = datetime.datetime.now(pytz.timezone("America/Indiana/Tell_City"))
-
     # Iterate through users and their notification settings
     for user_id, settings in users.items():
+        tz = pytz.timezone(settings.get("time_zone", "America/Indiana/Tell_City"))
+        current_time = datetime.datetime.now(tz)
+
         notification_time = settings["notification_time"]
 
         # Skip users with no notification time set
@@ -301,9 +374,10 @@ async def check_events():
 
         # Iterate through the events and notify users if needed
         for event in events:
-            event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"])
+            event_start = datetime.datetime.fromisoformat(event["start"]["dateTime"]).astimezone(tz)
             if event_start > current_time and event_start <= cutoff_time:
-                await send_notification(user_id, event)
+                await send_notification(user_id, event, tz)
+
 
 
 @bot.hybrid_command()
@@ -333,8 +407,6 @@ async def embed(ctx):
 async def main():
     await bot.login(os.getenv("DISCORD_BOT_TOKEN"))
     await bot.connect()
-
-
 while True:
     try:
         asyncio.run(main())
