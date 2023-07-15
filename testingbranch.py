@@ -1,3 +1,5 @@
+# This branch has unfinished MMR Range options as well as scraping events and writing to the calendar options. The scraping appears to be working but no events are written to the calendar
+
 import os
 import json
 import pytz
