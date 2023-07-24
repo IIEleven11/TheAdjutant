@@ -1,7 +1,8 @@
-import os
 import json
+import os
 import datetime
 import pytz
+import aiohttp
 from pytz import timezone
 from html_parser import html_to_text
 import logging.handlers
@@ -10,8 +11,11 @@ import asyncio
 from discord.ext import commands, tasks
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+import schedule
+import time
+import subprocess
 
-
+# LOGGING
 logger = logging.getLogger("discord")
 logger.setLevel(logging.INFO)
 logging.getLogger("discord.http").setLevel(logging.INFO)
@@ -29,29 +33,52 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
+
 DISCORD_BOT_TOKEN = os.getenv("BOT_TOKEN_TESTER")
 SERVICE_ACCOUNT_CREDS = r"H:/PROGRAMS/metagpt/web/SERVICE_ACCOUNT_CREDENTIALS.json"
 GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
-
-
 intents = discord.Intents.all()
 intents.message_content = True
 intents.members = True
-
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 events = []
-
-# set to keep track of responded message IDs(for sync command)
 responded_messages = set()
+session = None
+
+async def create_session():
+    global session
+    session = aiohttp.ClientSession()
+async def close_session():
+    await session.close()
+    await session.close()
+async def main():
+    await create_session()
+    await bot.login(os.getenv("BOT_TOKEN_TESTER"))
+    await bot.connect()
+    await session.close()
+
+
+# scraper, runs at 8am every morning.
+def run_script(script_path):
+    subprocess.call(['python', script_path])
+
+    schedule.every().day.at("08:00").do(run_script, script_path='H:/PROGRAMS/adjutanto/scrapers/amLeague_scraper.py')
+    schedule.every().day.at("08:00").do(run_script, script_path='H:/PROGRAMS/adjutanto/scrapers/cranky_scraper.py')
+    schedule.every().day.at("08:00").do(run_script, script_path='H:/PROGRAMS/adjutanto/scrapers/designedkiller_scraper.py')
+    schedule.every().day.at("08:00").do(run_script, script_path='H:/PROGRAMS/adjutanto/scrapers/mallkus_scraper.py')
+
+    # keep it on
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 # Manual sync command, owner only, guild specific
 @bot.hybrid_command()
 async def sync(ctx):
     if str(ctx.author.id) == "498248765698867201":
-        bot.tree.copy_global_to(guild=discord.Object(id=1123547534074314936))
-        await bot.tree.sync(guild=discord.Object(id=1123547534074314936))
+        bot.tree.copy_global_to(guild=discord.Object(id=643684572428500992))
+        await bot.tree.sync(guild=discord.Object(id=643684572428500992))
         await ctx.send("Synced!")
     else:
         await ctx.send("Sorry, only the bot owner can execute this command.")
@@ -92,6 +119,17 @@ def get_upcoming_events(max_results=10):
 async def send_notification(user_id, event, tz):
     print("send_notification function called")
     logger.info("send_notification function called")
+    # Get user's chosen MMR range
+    user = users[str(user_id)]
+    mmr_range = user.get("mmr_range")
+    # Check event title for MMR tag
+    event_title = event["summary"]
+    if "Plat" in event_title and mmr_range != "Platinum":
+        return
+    elif "Dia" in event_title and mmr_range != "Diamond":
+        return
+    elif "Masters" in event_title and mmr_range != "Masters":
+        return
     if isinstance(event, dict):
         print("event is a dictionary")
     else:
@@ -123,13 +161,6 @@ async def send_notification(user_id, event, tz):
         logger.exception(f"An error occurred while sending notification: {str(e)}")
 
 
-
-@bot.event
-async def on_ready():
-    print("Bot is ready")
-    check_events.start()
-
-
 # Opt In
 @bot.hybrid_command()
 async def opt_in(ctx):
@@ -152,7 +183,6 @@ async def opt_out(ctx):
         del users[str(user_id)]
         save_users_list()
         await ctx.send("You are now opted out from notifications!")
-
 
 
 # OMG Buttons!!!!!!!!!!!!!!!!!!!
@@ -302,30 +332,31 @@ async def list_events(ctx):
     if not events:
         await ctx.send("No upcoming events found.")
         return
-
-    output = "Upcoming events:\n"
+    embed = discord.Embed(
+        title="Upcoming Events",
+        color=0x00FF00
+    )
     for event in events:
-        start = datetime.datetime.fromisoformat(
-            event["start"].get("dateTime", event["start"].get("date"))
-        )
+        start = datetime.datetime.fromisoformat(event["start"].get("dateTime", event["start"].get("date")))
         start_str = start.strftime("%B %d %Y at %I:%M %p")
         event_details = event.get("description", "")
         event_details = html_to_text(event_details)
-        output += (
-            f"- {event['summary']}: {start_str}. Event Details - {event_details}\n"
+        embed.add_field(
+            name=event["summary"], 
+            value=f"{start_str}\n{event_details}",
+            inline=False
         )
+    await ctx.send(embed=embed)
 
-    await ctx.send(output)
 
-
-# 3 minutes loop to send notifications
+# 3 minutes loop de loop
 @tasks.loop(minutes=3)
 async def check_notifications():
     # Load users list
     with open("userslist.json") as f:
         users = json.load(f)
 
-    # Iterate through users and their notification settings
+    # Iterate through users 
     for user_id, settings in users.items():
         notification_time = settings["notification_time"]
         user_time_zone = settings.get("time_zone", "America/Indiana/Tell_City")
@@ -345,7 +376,7 @@ async def check_notifications():
                 await send_notification(user_id, event, tz)
 
 
-# Background task - Check and send notifications
+# Check and send notifications
 @tasks.loop(minutes=60)  # Adjust the interval according to your needs
 async def check_events():
     # Iterate through users and their notification settings
@@ -372,6 +403,42 @@ async def check_events():
                 await send_notification(user_id, event, tz)
 
 
+#skill buttons
+class MMRRangeButtons(discord.ui.View):
+
+    @discord.ui.button(label="Basic/Diamond and below")
+    async def platinum(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        users[user_id]["mmr_range"] = "basic"
+        save_users_list()
+        await interaction.response.send_message("MMR range set to Platinum")
+
+    @discord.ui.button(label="Minor/High diamond/Masters") 
+    async def diamond(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        users[user_id]["mmr_range"] = "minor"
+        save_users_list()
+        await interaction.response.send_message("MMR range set to Diamond")
+
+    @discord.ui.button(label="Major/Masters and Up")
+    async def masters(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        users[user_id]["mmr_range"] = "major"
+        save_users_list()
+        await interaction.response.send_message("MMR range set to Masters+")
+        
+        
+    @discord.ui.button(label="Open/GM")
+    async def masters(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        users[user_id]["mmr_range"] = "Open/GM"
+        save_users_list()
+        await interaction.response.send_message("MMR range set to Open/GM")
+
+@bot.hybrid_command()
+async def set_mmr_range(ctx):
+    await ctx.send("Select your MMR range:", view=MMRRangeButtons())
+
 # Fancy embed
 @bot.hybrid_command()
 async def embed(ctx):
@@ -397,11 +464,18 @@ async def embed(ctx):
     await ctx.send(embed=embed)
 
 
-async def main():
-    await bot.login(os.getenv("DISCORD_BOT_TOKEN"))
-    await bot.connect()
+@bot.event
+async def on_ready():
+    print("Bot is ready")
+    check_events.start()
+
+@bot.event
+async def on_disconnect():
+    await close_session(session)
 while True:
     try:
         asyncio.run(main())
     except Exception as e:
         print(f"An error occurred: {e}")
+        
+        

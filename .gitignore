@@ -8,3 +8,6 @@
 /discord.log
 /.env
 /__pycache__
+/errors.log
+/stuffandthings.txt
+/testingbranch.py
