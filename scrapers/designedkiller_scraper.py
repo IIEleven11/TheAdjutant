@@ -25,9 +25,8 @@ pending_checkbox.click()
 
 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".tournament-block .details")))
 
-# Loop through each tournament, get the title, date, and time
-tournaments = driver.find_elements(By.CSS_SELECTOR, '.tournament-block .details')
-
+# Loop through each tournament, get the title, date, time and link
+tournaments = driver.find_elements(By.CSS_SELECTOR, '.tournament-block')
 
 event_titles = []
 event_dates = []
@@ -76,21 +75,24 @@ service = build('calendar', 'v3', credentials=credentials)
 calendar_id = os.getenv("GOOGLE_CALENDAR_ID")
 
 # Timezone for the events
-timezone = 'Europe/Moscow'  # CDT timezone
+timezone = 'Europe/Bucharest'  # EEST timezone
 
 # Calculate the utc offset for the event to ensure time correctness regardless of DST
 cdt = pytz.timezone(timezone)
 utc_offset_min = cdt.utcoffset(datetime.now()).total_seconds() / 60
+
 
 # Parse events and add to Google Calendar
 for title, date_str, time_str, link in zip(event_titles, event_dates, event_times, event_links):
     # Trim 'CDT' from time string and combine date and time strings together
     time_str_no_tz = time_str.replace(' EEST', '')
     start_time_str = f"{date_str} {time_str_no_tz}"
-    
+
+
     # Convert string datetime into datetime object
-    start_time = datetime.strptime(start_time_str, '%a, %B %d, %Y %I:%M %p')  # No %Z required as timezone is removed
-    
+    start_time = datetime.strptime(start_time_str, '%a, %B %d, %Y %I:%M %p')  
+
+
     # Google Calendar's API requires datetimes in the RFC3339 format
     # Convert start and end time to RFC3339 format
     start_time_rfc3339 = (start_time - timedelta(minutes=utc_offset_min)).isoformat("T") + "Z"  # Convert to UTC
@@ -127,5 +129,3 @@ for title, date_str, time_str, link in zip(event_titles, event_dates, event_time
             print(f"Event '{title}' added to the calendar.")
         except Exception as e:
             print(f"An error occurred while adding the event '{title}' to the calendar: {e}")
-
-
